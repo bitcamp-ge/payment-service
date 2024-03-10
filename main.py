@@ -1,35 +1,39 @@
 import requests, json, datetime
 import settings
 
+
 def login(username, password, url):
-    response = requests.post(
-        url,
-        data={
-            "username": username,
-            "password": password
-        }
-    )
-    
-    if response.ok:
-        data = json.loads(response.content.decode("utf-8"))
+    try:
+        response = requests.post(
+            url,
+            json={"username": username, "password": password}
+        )
+        response.raise_for_status()
+        
+        data = response.json()
+        
         return data["token"]
-    else:
+    except requests.RequestException as e:
+        print(f"Login error: {e}")
         return None
 
+
 def get_due_enrolment(token):
+    
     today = datetime.date.today() - datetime.timedelta(days=30)
     
-    response = requests.get(
-        settings.BACKEND_URL + f"/enrollments/query?date={today.__str__()}",
-        headers={
-            "Authorization": f"Token {token}" 
-        }
-    )
+    try:
+        response = requests.get(
+            f"{settings.BACKEND_URL}/enrollments/query?date={today.isoformat()}",
+            headers={"Authorization": f"Token {token}"}
+        )
+        
+        response.raise_for_status()
+        
+        return response.json()
     
-    if response.ok:    
-        data = json.loads(response.content.decode("utf-8"))
-        return data
-    else:
+    except requests.RequestException as e:
+        print(f"Error fetching due enrolment: {e}")
         return None
 
 def main():
