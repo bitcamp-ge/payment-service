@@ -1,4 +1,4 @@
-import requests, json, datetime
+import requests, json, datetime, utils
 import settings
 
 def login(username, password, url):
@@ -32,6 +32,21 @@ def get_due_enrolment(token):
     else:
         return None
 
+def filter_enrolment_data(data):
+    return [
+        {
+            "id": item["id"],
+            "user": item["user"],
+            "service_id": item["service_id"],
+            "program_id": item["program_id"],
+            "start_payment": item["start_payment"],
+            "last_payment": item["last_payment"],
+            "payments": item["payments"],
+            "status": item["status"]
+        }
+        for item in data
+    ]
+
 def main():
     AUTHTOKEN = login(
         settings.DJANGO_ADMIN_USERNAME,
@@ -39,13 +54,13 @@ def main():
         settings.BACKEND_URL + "/auth/login"
     )
     
-    print(AUTHTOKEN)
+    utils.log("[+] Authentication token:", AUTHTOKEN)
+    
+    data = get_due_enrolment(AUTHTOKEN)
+    filtered_data = filter_enrolment_data(data)
     
     print(
-        json.dumps(
-            get_due_enrolment(AUTHTOKEN),
-            indent=4
-        )
+        json.dumps(filtered_data, indent=4)
     )
 
 if __name__ == "__main__":
