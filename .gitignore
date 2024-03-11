@@ -30,9 +30,11 @@ MANIFEST
 *.manifest
 *.spec
 
-# Installer logs
+# Logs
 pip-log.txt
 pip-delete-this-directory.txt
+logs.txt
+debug.txt
 
 # Unit test / coverage reports
 htmlcov/
