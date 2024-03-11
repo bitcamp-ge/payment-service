@@ -16,6 +16,7 @@ def login(username, password, url):
     else:
         return None
 
+# get_due_enrolment(AUTHTOKEN)
 def get_due_enrolment(token):
     today = datetime.date.today() - datetime.timedelta(days=30)
     
@@ -26,12 +27,13 @@ def get_due_enrolment(token):
         }
     )
     
-    if response.ok:    
+    if response.ok:
         data = json.loads(response.content.decode("utf-8"))
         return data
     else:
         return None
 
+# filter_enrolment_data(get_due_enrolment(AUTHTOKEN))
 def filter_enrolment_data(data):
     return [
         {
@@ -46,6 +48,25 @@ def filter_enrolment_data(data):
         }
         for item in data
     ]
+    
+# update_last_payment(AUTHTOKEN, filtered_data[0]["id"], datetime.date(2024, 2, 2).__str__())
+def update_last_payment(token, enrolment_id, new_date):
+    response = requests.put(
+        settings.BACKEND_URL + f"/enrollments/update-last-payment",
+        headers={
+            "Authorization": f"Token {token}"
+        },
+        data={
+            "id": enrolment_id,
+            "last_payment": new_date
+        }
+    )
+
+    if response.ok:
+        data = json.loads(response.content.decode("utf-8"))
+        return data
+    else:
+        return None
 
 def main():
     AUTHTOKEN = login(
