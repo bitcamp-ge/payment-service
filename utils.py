@@ -1,4 +1,4 @@
-import time
+import time, settings
 
 from settings import LOGFILE_PATH, DEBUGFILE_PATH
 
@@ -9,6 +9,9 @@ CURRENT_TIME = lambda: f"[{time.localtime().tm_hour}:{time.localtime().tm_min}:{
 CURRENT_DATE = lambda: f"[{time.localtime().tm_mon}/{time.localtime().tm_mday}/{time.localtime().tm_year}]"
 
 def log(*content, timestamp = True, datestamp = True, sep = " ", logfile = DEBUGFILE_PATH):
+    if settings.DEBUG == False and logfile == DEBUGFILE_PATH:
+        return False
+    
     content = sep.join(content)
     if timestamp:
         content = CURRENT_TIME() + " " + str(content)

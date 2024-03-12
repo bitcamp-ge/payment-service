@@ -2,6 +2,10 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+DEBUG = os.environ.get("DEBUG") == "True"
+
+QUIT_ON_ERROR = os.environ.get("QUIT_ON_ERROR") == "True"
+
 LOGFILE_PATH = os.environ.get("LOGFILE_PATH")
 DEBUGFILE_PATH = os.environ.get("DEBUGFILE_PATH")
 
