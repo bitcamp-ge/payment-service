@@ -106,6 +106,25 @@ def update_last_payment(token, enrolment_id, new_date):
         utils.log(f"[!] Failed to update last payment with status code: {response.status_code}")
         exit(1)
 
+def take_action(enrolment):
+    overdue_by = enrolment["overdue"] - 30
+    
+    if overdue_by > 5:
+        print(f"More than 35 days have passed ({overdue_by} days)")
+        ... # More than 35 days have passed
+        # He cant keep getting away with this!
+    elif overdue_by > 0:
+        print(f"More than 30 days have passed ({overdue_by} days)")
+        ... # More than 30 days have passed
+        # We gotta do something man!
+    elif overdue_by == 0:
+        print("Exactly 30 days have passed")
+        ... # Exactly 30 days have passed
+    
+    # Lets try requesting Payze to charge the user
+    # If it fails, we will try again tommorow
+    # If it succeeds, we will update the last payment date to today
+
 def main():
     AUTHTOKEN = login(
         settings.DJANGO_ADMIN_USERNAME,
@@ -116,9 +135,7 @@ def main():
     data = get_due_enrolment(AUTHTOKEN)
     filtered_data = filter_enrolment_data(data)
     
-    print(
-        json.dumps(filtered_data, indent=4)
-    )
+    [take_action(enrolment) for enrolment in filtered_data]
 
 if __name__ == "__main__":
     utils.log("[+] Script started")
