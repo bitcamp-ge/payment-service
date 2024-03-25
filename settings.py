@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+PAYZE_API_KEY = os.environ.get("PAYZE_API_KEY")
+
 DEBUG = os.environ.get("DEBUG") == "True"
 
 QUIT_ON_ERROR = os.environ.get("QUIT_ON_ERROR") == "True"
