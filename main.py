@@ -105,25 +105,71 @@ def update_last_payment(token, enrolment_id, new_date):
     else:
         utils.log(f"[!] Failed to update last payment with status code: {response.status_code}")
         exit(1)
+        
+def perform_transaction(enrolment, payments, user):
+    service = enrolment["service"]
+    last_payment = payments[-1]
+    
+    payload = {
+        "source": "Card",
+        "amount": service["price"].__str__(),
+        "currency": "GEL",
+        "language": "KA",
+        "token": last_payment["token"].__str__(),
+        "hooks": {
+            "webhookGateway": "https://platform.bitcamp.ge/payments/payze_hook",
+            "successRedirectGateway": f"https://platform.bitcamp.ge/enrollments/{enrolment['id']}/check-payze-subscription-status",
+            "errorRedirectGateway": f"https://platform.bitcamp.ge/enrollments/{enrolment['id']}/check-payze-subscription-status"
+        },
+        "metadata": {
+            "extraAttributes": [
+                { "key": "service", "value": service["title"] },
+                { "key": "email", "value": user["email"] }
+            ]
+        }
+    }
+    
+    headers = {
+        "Accept": "application/*+json",
+        "Content-Type": "application/json",
+        "Authorization": settings.PAYZE_API_KEY,
+        "User-Agent": "bitcampayservice/v1"
+    }
+    
+    response = requests.put("https://payze.io/v2/api/payment", json=payload, headers=headers)
+    
+    if response.ok:
+        payze_data = response.json()
+        
+        payment = {
+            "enrollment": enrolment,
+            "amount": payze_data["data"]["payment"]["amount"],
+            "status": payze_data["data"]["payment"]["status"],
+            "payze_transactionId": payze_data["data"]["payment"]["transactionId"],
+            "payze_paymentId": payze_data["data"]["payment"]["id"],
+            "cardMask": payze_data["data"]["payment"]["cardPayment"]["cardMask"] if payze_data["data"]["payment"]["cardPayment"]["cardMask"] is not None else "",
+            "token": payze_data["data"]["payment"]["cardPayment"]["token"],
+        }
+        
+        return payment        
 
-def take_action(enrolment):
+def take_action(token, enrolment):
     overdue_by = enrolment["overdue"] - 30
     
-    if overdue_by > 5:
-        print(f"More than 35 days have passed ({overdue_by} days)")
-        ... # More than 35 days have passed
-        # He cant keep getting away with this!
-    elif overdue_by > 0:
-        print(f"More than 30 days have passed ({overdue_by} days)")
-        ... # More than 30 days have passed
-        # We gotta do something man!
-    elif overdue_by == 0:
-        print("Exactly 30 days have passed")
-        ... # Exactly 30 days have passed
-    
-    # Lets try requesting Payze to charge the user
-    # If it fails, we will try again tommorow
-    # If it succeeds, we will update the last payment date to today
+    if enrolment["status"] == "Active":
+        if overdue_by > 5:
+            print(f"More than 35 days have passed ({overdue_by} days)")
+            ... # More than 35 days have passed
+            # He cant keep getting away with this!
+
+        data = json.loads(requests.get(
+            settings.BACKEND_URL + f"/enrollments/get-enrollment-data?id={enrolment['id']}",
+            headers={
+                "Authorization": f"Token {token}"
+            }
+        ).content)
+        
+        perform_transaction(data["enrolment"], data["enrolment"]["payments"], data["user"])
 
 def main():
     AUTHTOKEN = login(
@@ -135,7 +181,7 @@ def main():
     data = get_due_enrolment(AUTHTOKEN)
     filtered_data = filter_enrolment_data(data)
     
-    [take_action(enrolment) for enrolment in filtered_data]
+    [take_action(AUTHTOKEN, enrolment) for enrolment in filtered_data]
 
 if __name__ == "__main__":
     utils.log("[+] Script started")
