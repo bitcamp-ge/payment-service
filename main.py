@@ -110,6 +110,10 @@ def perform_transaction(enrolment, payments, user):
     service = enrolment["service"]
     last_payment = payments[-1]
     
+    if service["price"] <= 0.00:
+        # Its free!
+        return False
+    
     payload = {
         "source": "Card",
         "amount": service["price"].__str__(),
